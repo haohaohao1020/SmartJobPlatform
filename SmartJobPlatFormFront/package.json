@@ -1,0 +1,27 @@
+{
+  "name": "smart-job-platform-front",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "dev:uiapp": "vite --config vite.config.uiapp.js",
+    "dev:web": "vite --config vite.config.web.js",
+    "build": "vite build",
+    "build:uiapp": "vite build --config vite.config.uiapp.js",
+    "build:web": "vite build --config vite.config.web.js",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "element-ui": "^2.15.14",
+    "mockjs": "^1.1.0",
+    "pinia": "^2.1.7",
+    "vue": "^2.7.14",
+    "vue-router": "^3.6.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue2": "^2.2.0",
+    "sass": "^1.69.5",
+    "vite": "^4.5.0"
+  }
+}
