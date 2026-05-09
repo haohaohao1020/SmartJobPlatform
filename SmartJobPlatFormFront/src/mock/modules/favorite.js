@@ -44,6 +44,24 @@ Mock.mock('/api/favorites', 'post', (options) => {
   };
 });
 
+// uiapp 收藏岗位
+Mock.mock('/api/favorites/add', 'post', (options) => {
+  const body = JSON.parse(options.body);
+  const newFavorite = {
+    id: favoriteData.list.length + 1,
+    jobId: body.jobId,
+    userId: 1,
+    favoriteTime: Mock.mock('@datetime')
+  };
+  favoriteData.list.unshift(newFavorite);
+  
+  return {
+    code: 200,
+    message: '收藏成功',
+    data: newFavorite
+  };
+});
+
 // 取消收藏
 Mock.mock(RegExp('/api/favorites/\\d+'), 'delete', (options) => {
   return {
@@ -58,6 +76,15 @@ Mock.mock('/api/favorites/batch', 'delete', (options) => {
   return {
     code: 200,
     message: '批量取消收藏成功',
+    data: null
+  };
+});
+
+// uiapp 取消收藏
+Mock.mock('/api/favorites/remove', 'post', (options) => {
+  return {
+    code: 200,
+    message: '取消收藏成功',
     data: null
   };
 });
@@ -95,6 +122,43 @@ Mock.mock(RegExp('/api/favorites/my.*'), 'get', (options) => {
   );
   
   // 分页
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedFavorites = filteredFavorites.slice(startIndex, endIndex);
+  
+  return {
+    code: 200,
+    message: '获取成功',
+    data: {
+      list: paginatedFavorites,
+      total: filteredFavorites.length,
+      page,
+      pageSize
+    }
+  };
+});
+
+// uiapp 获取收藏列表
+Mock.mock(RegExp('/api/favorites/list.*'), 'get', (options) => {
+  const url = options.url;
+  const params = {};
+  const queryString = url.split('?')[1];
+  if (queryString) {
+    queryString.split('&').forEach(param => {
+      const [key, value] = param.split('=');
+      params[key] = decodeURIComponent(value);
+    });
+  }
+  
+  const page = parseInt(params.page) || 1;
+  const pageSize = parseInt(params.pageSize) || 10;
+  
+  let filteredFavorites = [...favoriteData.list];
+  
+  filteredFavorites.sort((a, b) => 
+    new Date(b.favoriteTime) - new Date(a.favoriteTime)
+  );
+  
   const startIndex = (page - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const paginatedFavorites = filteredFavorites.slice(startIndex, endIndex);

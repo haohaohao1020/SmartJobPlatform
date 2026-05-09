@@ -94,9 +94,12 @@ const routes = [
   }
 ];
 
+const isStandalone = typeof process !== 'undefined' && process.env && process.env.WEB_STANDALONE === 'true';
+const routerBase = isStandalone ? '/' : '/web/';
+
 const router = new VueRouter({
   mode: 'history',
-  base: '/web/',
+  base: routerBase,
   routes
 });
 

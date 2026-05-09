@@ -12,21 +12,12 @@ export default defineConfig({
   define: {
     'process.env.UIAPP_STANDALONE': '"true"'
   },
-  root: '.',
+  root: resolve(__dirname, 'src/uiapp'),
   base: './',
-  publicDir: 'public',
+  publicDir: resolve(__dirname, 'public'),
   build: {
-    outDir: 'dist-uiapp',
-    rollupOptions: {
-      input: {
-        uiapp: resolve(__dirname, 'uiapp.html')
-      },
-      output: {
-        entryFileNames: 'assets/[name].[hash].js',
-        chunkFileNames: 'assets/[name].[hash].js',
-        assetFileNames: 'assets/[name].[hash].[ext]'
-      }
-    }
+    outDir: resolve(__dirname, 'dist-uiapp'),
+    emptyOutDir: true
   },
   server: {
     port: 8080,

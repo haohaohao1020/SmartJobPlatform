@@ -9,21 +9,15 @@ export default defineConfig({
       '@': resolve(__dirname, 'src')
     }
   },
-  root: '.',
+  define: {
+    'process.env.WEB_STANDALONE': '"true"'
+  },
+  root: resolve(__dirname, 'src/web'),
   base: './',
-  publicDir: 'public',
+  publicDir: resolve(__dirname, 'public'),
   build: {
-    outDir: 'dist-web',
-    rollupOptions: {
-      input: {
-        web: resolve(__dirname, 'web.html')
-      },
-      output: {
-        entryFileNames: 'assets/[name].[hash].js',
-        chunkFileNames: 'assets/[name].[hash].js',
-        assetFileNames: 'assets/[name].[hash].[ext]'
-      }
-    }
+    outDir: resolve(__dirname, 'dist-web'),
+    emptyOutDir: true
   },
   server: {
     port: 8081,

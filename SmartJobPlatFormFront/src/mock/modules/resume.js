@@ -134,6 +134,15 @@ Mock.mock('/api/resumes/my', 'get', () => {
   };
 });
 
+// uiapp 获取简历详情
+Mock.mock('/api/resume/detail', 'get', () => {
+  return {
+    code: 200,
+    message: '获取成功',
+    data: resumeData
+  };
+});
+
 // 创建/更新简历
 Mock.mock('/api/resumes', 'post', (options) => {
   const body = JSON.parse(options.body);
@@ -141,6 +150,17 @@ Mock.mock('/api/resumes', 'post', (options) => {
     code: 200,
     message: '保存成功',
     data: { ...resumeData, ...body, updateTime: Mock.mock('@datetime') }
+  };
+});
+
+// uiapp 保存简历
+Mock.mock('/api/resume/save', 'post', (options) => {
+  const body = JSON.parse(options.body);
+  Object.assign(resumeData, body, { updateTime: Mock.mock('@datetime') });
+  return {
+    code: 200,
+    message: '保存成功',
+    data: resumeData
   };
 });
 

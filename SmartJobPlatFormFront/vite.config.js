@@ -24,26 +24,6 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: false,
-    proxy: {
-      '/uiapp': {
-        target: 'http://127.0.0.1:3000',
-        rewrite: (path) => path,
-        bypass: (req, res, proxyOptions) => {
-          if (req.url.startsWith('/uiapp/') && !req.url.includes('.')) {
-            req.url = '/uiapp.html';
-          }
-        }
-      },
-      '/web': {
-        target: 'http://127.0.0.1:3000',
-        rewrite: (path) => path,
-        bypass: (req, res, proxyOptions) => {
-          if (req.url.startsWith('/web/') && !req.url.includes('.')) {
-            req.url = '/web.html';
-          }
-        }
-      }
-    }
+    open: false
   }
 });

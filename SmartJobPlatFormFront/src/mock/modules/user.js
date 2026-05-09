@@ -71,7 +71,10 @@ Mock.mock('/api/jobseeker/login', 'post', (options) => {
     return {
       code: 200,
       message: '登录成功',
-      data: user
+      data: {
+        token: user.token,
+        userInfo: user
+      }
     };
   }
   return {
@@ -101,12 +104,168 @@ Mock.mock('/api/hr/login', 'post', (options) => {
     return {
       code: 200,
       message: '登录成功',
-      data: user
+      data: {
+        token: user.token,
+        userInfo: user
+      }
     };
   }
   return {
     code: 400,
     message: '手机号或密码错误',
+    data: null
+  };
+});
+
+// uiapp 求职者登录
+Mock.mock('/api/user/login', 'post', (options) => {
+  const body = JSON.parse(options.body);
+  const { phone, password } = body;
+  
+  if (phone && password) {
+    const user = {
+      id: 1,
+      name: '张三',
+      phone: phone,
+      email: 'zhangsan@example.com',
+      avatar: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20portrait%20avatar&image_size=square",
+      role: 'jobseeker',
+      token: 'uiapp_token_' + Date.now()
+    };
+    return {
+      code: 200,
+      message: '登录成功',
+      data: {
+        token: user.token,
+        userInfo: user
+      }
+    };
+  }
+  return {
+    code: 400,
+    message: '手机号或密码错误',
+    data: null
+  };
+});
+
+// uiapp 求职者注册
+Mock.mock('/api/user/register', 'post', (options) => {
+  const body = JSON.parse(options.body);
+  const { phone, password, name } = body;
+  
+  if (phone && password && name) {
+    return {
+      code: 200,
+      message: '注册成功',
+      data: {
+        id: Date.now(),
+        name,
+        phone,
+        email: `${phone}@example.com`,
+        avatar: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20portrait%20avatar&image_size=square",
+        role: 'jobseeker',
+        token: 'uiapp_token_' + Date.now()
+      }
+    };
+  }
+  return {
+    code: 400,
+    message: '注册失败',
+    data: null
+  };
+});
+
+// uiapp 更新用户信息
+Mock.mock('/api/user/update', 'post', (options) => {
+  const body = JSON.parse(options.body);
+  return {
+    code: 200,
+    message: '更新成功',
+    data: body
+  };
+});
+
+// uiapp 修改密码
+Mock.mock('/api/user/change-password', 'post', (options) => {
+  const body = JSON.parse(options.body);
+  const { oldPassword, newPassword } = body;
+  
+  if (oldPassword && newPassword) {
+    return {
+      code: 200,
+      message: '密码修改成功',
+      data: null
+    };
+  }
+  return {
+    code: 400,
+    message: '原密码错误',
+    data: null
+  };
+});
+
+// web 通用修改密码
+Mock.mock('/api/user/change-password', 'put', (options) => {
+  const body = JSON.parse(options.body);
+  const { oldPassword, newPassword } = body;
+  
+  if (oldPassword && newPassword) {
+    return {
+      code: 200,
+      message: '密码修改成功',
+      data: null
+    };
+  }
+  return {
+    code: 400,
+    message: '原密码错误',
+    data: null
+  };
+});
+
+// uiapp 获取用户统计
+Mock.mock('/api/user/stats', 'get', () => {
+  return {
+    code: 200,
+    message: '获取成功',
+    data: {
+      applications: Mock.mock('@integer(5, 50)'),
+      interviews: Mock.mock('@integer(0, 10)'),
+      offers: Mock.mock('@integer(0, 5)'),
+      favorites: Mock.mock('@integer(10, 100)')
+    }
+  };
+});
+
+// web 企业/HR 登录
+Mock.mock('/api/company/login', 'post', (options) => {
+  const body = JSON.parse(options.body);
+  const { username, password } = body;
+  
+  if (username && password) {
+    const user = {
+      id: 101,
+      name: '李经理',
+      phone: '13900139000',
+      email: 'hr@company.com',
+      avatar: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=business%20professional%20avatar&image_size=square",
+      role: 'hr',
+      companyId: 1,
+      companyName: '智联科技有限公司',
+      token: 'hr_token_' + Date.now()
+    };
+    return {
+      code: 200,
+      message: '登录成功',
+      data: {
+        token: user.token,
+        userInfo: user
+      }
+    };
+  }
+  return {
+    code: 400,
+    message: '账号或密码错误',
     data: null
   };
 });
@@ -128,7 +287,10 @@ Mock.mock('/api/admin/login', 'post', (options) => {
     return {
       code: 200,
       message: '登录成功',
-      data: user
+      data: {
+        token: user.token,
+        userInfo: user
+      }
     };
   }
   return {

@@ -58,6 +58,28 @@ Mock.mock('/api/applications', 'post', (options) => {
   };
 });
 
+// uiapp 投递岗位
+Mock.mock('/api/applications/submit', 'post', (options) => {
+  const body = JSON.parse(options.body);
+  const newApplication = {
+    id: applicationData.list.length + 1,
+    ...body,
+    userId: 1,
+    status: 1,
+    statusName: '待查看',
+    isRead: false,
+    applyTime: Mock.mock('@datetime'),
+    updateTime: Mock.mock('@datetime')
+  };
+  applicationData.list.unshift(newApplication);
+  
+  return {
+    code: 200,
+    message: '投递成功',
+    data: newApplication
+  };
+});
+
 // 获取我的投递列表
 Mock.mock(RegExp('/api/applications/my.*'), 'get', (options) => {
   // 解析查询参数
@@ -90,6 +112,50 @@ Mock.mock(RegExp('/api/applications/my.*'), 'get', (options) => {
   );
   
   // 分页
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedApplications = filteredApplications.slice(startIndex, endIndex);
+  
+  return {
+    code: 200,
+    message: '获取成功',
+    data: {
+      list: paginatedApplications,
+      total: filteredApplications.length,
+      page,
+      pageSize
+    }
+  };
+});
+
+// uiapp 获取投递列表
+Mock.mock(RegExp('/api/applications/list.*'), 'get', (options) => {
+  const url = options.url;
+  const params = {};
+  const queryString = url.split('?')[1];
+  if (queryString) {
+    queryString.split('&').forEach(param => {
+      const [key, value] = param.split('=');
+      params[key] = decodeURIComponent(value);
+    });
+  }
+  
+  const page = parseInt(params.page) || 1;
+  const pageSize = parseInt(params.pageSize) || 10;
+  const status = params.status || '';
+  
+  let filteredApplications = [...applicationData.list];
+  
+  if (status) {
+    filteredApplications = filteredApplications.filter(app => 
+      app.status === parseInt(status)
+    );
+  }
+  
+  filteredApplications.sort((a, b) => 
+    new Date(b.applyTime) - new Date(a.applyTime)
+  );
+  
   const startIndex = (page - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const paginatedApplications = filteredApplications.slice(startIndex, endIndex);
