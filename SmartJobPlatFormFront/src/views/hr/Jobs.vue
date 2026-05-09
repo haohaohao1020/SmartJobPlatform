@@ -42,7 +42,7 @@
           style="width: 100%"
           stripe
         >
-          <el-table-column prop="title" label="岗位名称" min-width="200">
+          <el-table-column prop="title" label="岗位名称" min-width="240">
             <template slot-scope="scope">
               <div class="job-info">
                 <span class="job-title" @click="goToDetail(scope.row.id)">{{ scope.row.title }}</span>
@@ -52,6 +52,11 @@
                   <span>{{ scope.row.workYears }}</span>
                   <span class="divider">|</span>
                   <span>{{ scope.row.education }}</span>
+                </div>
+                <div class="job-cats">
+                  <el-tag size="mini" type="primary" effect="plain">{{ scope.row.industry }}</el-tag>
+                  <el-tag size="mini" type="success" effect="plain">{{ scope.row.categoryName }}</el-tag>
+                  <el-tag v-if="scope.row.subCategory" size="mini" effect="plain">{{ scope.row.subCategory }}</el-tag>
                 </div>
               </div>
             </template>
@@ -353,11 +358,18 @@ export default {
 .job-meta {
   font-size: 12px;
   color: #999;
+  margin-bottom: 6px;
 }
 
 .job-meta .divider {
   margin: 0 5px;
   color: #e4e7ed;
+}
+
+.job-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .salary {

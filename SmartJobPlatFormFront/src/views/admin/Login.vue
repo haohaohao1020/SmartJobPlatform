@@ -83,8 +83,16 @@ export default {
           { min: 6, max: 20, message: '密码长度为6-20位', trigger: 'blur' }
         ]
       },
-      loading: false
+      loading: false,
+      userStore: null
     };
+  },
+  created() {
+    this.userStore = useUserStore();
+    // 如果已经登录，直接跳转
+    if (this.userStore.isAuthenticated) {
+      this.$router.push('/admin/dashboard');
+    }
   },
   methods: {
     // 处理登录
@@ -95,16 +103,21 @@ export default {
           try {
             const res = await post('/admin/login', this.loginForm);
             if (res.code === 200) {
-              // 保存用户信息到 store
-              const userStore = useUserStore();
-              userStore.setUserInfo(res.data);
+              this.userStore.setUserInfo({
+                ...res.data.userInfo,
+                token: res.data.token
+              });
               
               this.$message.success('登录成功');
-              // 跳转到数据控制台
-              this.$router.push('/admin/dashboard');
+              setTimeout(() => {
+                this.$router.push('/admin/dashboard');
+              }, 100);
+            } else {
+              this.$message.error(res.message || '登录失败');
             }
           } catch (error) {
             console.error('登录失败:', error);
+            this.$message.error('登录失败，请重试');
           } finally {
             this.loading = false;
           }

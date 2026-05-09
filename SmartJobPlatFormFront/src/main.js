@@ -6,9 +6,6 @@ import App from './App.vue';
 import router from './router';
 import './styles/index.scss';
 
-// 引入 Mock 配置
-import './mock';
-
 Vue.use(ElementUI);
 Vue.use(PiniaVuePlugin);
 

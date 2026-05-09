@@ -99,7 +99,10 @@ export default {
             if (res.code === 200) {
               // 保存用户信息到 store
               const userStore = useUserStore();
-              userStore.setUserInfo(res.data);
+              userStore.setUserInfo({
+                ...res.data.userInfo,
+                token: res.data.token
+              });
               
               this.$message.success('登录成功');
               // 跳转到岗位列表页

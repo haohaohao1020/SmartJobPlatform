@@ -35,6 +35,39 @@
           </el-form-item>
           
           <div class="form-row">
+            <el-form-item label="所属行业" prop="industryId">
+              <el-select v-model="jobForm.industryId" placeholder="请选择所属行业" style="width: 100%">
+                <el-option 
+                  v-for="industry in industries" 
+                  :key="industry.id" 
+                  :label="industry.name" 
+                  :value="industry.id"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="岗位类型" prop="categoryId">
+              <el-select v-model="jobForm.categoryId" placeholder="请选择岗位类型" style="width: 100%">
+                <el-option 
+                  v-for="category in jobCategories" 
+                  :key="category.id" 
+                  :label="category.name" 
+                  :value="category.id"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+          </div>
+          
+          <div class="form-row">
+            <el-form-item label="细分岗位" prop="subCategory">
+              <el-select v-model="jobForm.subCategory" placeholder="请选择细分岗位" style="width: 100%" :disabled="!jobForm.categoryId">
+                <el-option 
+                  v-for="sub in selectedCategory?.subCategories || []" 
+                  :key="sub" 
+                  :label="sub" 
+                  :value="sub"
+                ></el-option>
+              </el-select>
+            </el-form-item>
             <el-form-item label="工作城市" prop="city">
               <el-select v-model="jobForm.city" placeholder="请选择工作城市" style="width: 100%">
                 <el-option label="北京" value="北京"></el-option>
@@ -193,8 +226,13 @@ export default {
       isEdit: false,
       jobId: null,
       publishing: false,
+      industries: [],
+      jobCategories: [],
       jobForm: {
         title: '',
+        industryId: '',
+        categoryId: '',
+        subCategory: '',
         city: '',
         jobType: '全职',
         workYears: '',
@@ -209,6 +247,12 @@ export default {
         title: [
           { required: true, message: '请输入岗位名称', trigger: 'blur' },
           { min: 2, max: 50, message: '岗位名称长度为2-50个字符', trigger: 'blur' }
+        ],
+        industryId: [
+          { required: true, message: '请选择所属行业', trigger: 'change' }
+        ],
+        categoryId: [
+          { required: true, message: '请选择岗位类型', trigger: 'change' }
         ],
         city: [
           { required: true, message: '请选择工作城市', trigger: 'change' }
@@ -233,7 +277,16 @@ export default {
       }
     };
   },
-  mounted() {
+  computed: {
+    selectedCategory() {
+      if (this.jobForm.categoryId && this.jobCategories.length > 0) {
+        return this.jobCategories.find(c => c.id == this.jobForm.categoryId);
+      }
+      return null;
+    }
+  },
+  async mounted() {
+    await this.loadCategories();
     const id = this.$route.params.id;
     if (id) {
       this.isEdit = true;
@@ -242,12 +295,31 @@ export default {
     }
   },
   methods: {
+    async loadCategories() {
+      try {
+        const [industryRes, categoryRes] = await Promise.all([
+          get('/jobs/industries'),
+          get('/jobs/categories')
+        ]);
+        if (industryRes.code === 200) {
+          this.industries = industryRes.data;
+        }
+        if (categoryRes.code === 200) {
+          this.jobCategories = categoryRes.data;
+        }
+      } catch (error) {
+        console.error('加载分类数据失败:', error);
+      }
+    },
     async getJobDetail(id) {
       try {
         const res = await get(`/jobs/${id}`);
         if (res.code === 200) {
           this.jobForm = {
             title: res.data.title || '',
+            industryId: res.data.industryId || '',
+            categoryId: res.data.categoryId || '',
+            subCategory: res.data.subCategory || '',
             city: res.data.city || '',
             jobType: res.data.jobType || '全职',
             workYears: res.data.workYears || '',

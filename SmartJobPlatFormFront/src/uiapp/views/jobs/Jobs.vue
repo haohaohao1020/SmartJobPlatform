@@ -1,12 +1,31 @@
 <template>
   <div class="jobs-page">
-    <div class="search-header">
-      <div class="search-bar" @click="showSearch = true">
-        <i class="el-icon-search"></i>
-        <span>{{ searchKeyword || '搜索岗位名称、公司名称' }}</span>
-      </div>
-      <div class="filter-btn" @click="showFilter = true">
-        <i class="el-icon-filter"></i>
+    <div class="top-tabs">
+      <div class="tab-list">
+        <div 
+          class="tab-item"
+          :class="{ active: activeTabType === 'industry' }"
+          @click="toggleCategoryTab('industry')"
+        >
+          <span>行业</span>
+          <i :class="activeTabType === 'industry' && showPanel ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"></i>
+        </div>
+        <div 
+          class="tab-item"
+          :class="{ active: activeTabType === 'category' }"
+          @click="toggleCategoryTab('category')"
+        >
+          <span>职位</span>
+          <i :class="activeTabType === 'category' && showPanel ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"></i>
+        </div>
+        <div class="tab-item" @click="showSearch = true">
+          <i class="el-icon-search"></i>
+          <span>搜索</span>
+        </div>
+        <div class="tab-item" @click="showFilter = true">
+          <i class="el-icon-filter"></i>
+          <span>筛选</span>
+        </div>
       </div>
     </div>
     
@@ -22,13 +41,77 @@
       <span class="clear-all" @click="clearAllFilters">清除全部</span>
     </div>
     
+    <div class="category-panel" v-if="showPanel">
+      <div class="left-list" v-if="activeTabType === 'industry'">
+        <div 
+          class="list-item"
+          :class="{ active: !filters.industryId }"
+          @click="selectIndustry('')"
+        >
+          全部行业
+        </div>
+        <div 
+          v-for="industry in industries" 
+          :key="industry.id"
+          class="list-item"
+          :class="{ active: filters.industryId == industry.id }"
+          @click="selectIndustry(industry.id)"
+        >
+          {{ industry.name }}
+        </div>
+      </div>
+      
+      <div class="left-list" v-else>
+        <div 
+          class="list-item"
+          :class="{ active: !filters.categoryId }"
+          @click="selectCategory('')"
+        >
+          全部职位
+        </div>
+        <div 
+          v-for="category in jobCategories" 
+          :key="category.id"
+          class="list-item"
+          :class="{ active: filters.categoryId == category.id }"
+          @click="selectCategory(category.id)"
+        >
+          {{ category.name }}
+        </div>
+      </div>
+      
+      <div class="right-content" v-if="selectedCategory && selectedCategory.subCategories">
+        <div class="grid-list">
+          <div 
+            class="grid-item"
+            :class="{ active: !filters.subCategory }"
+            @click="selectSubCategory('')"
+          >
+            全部
+          </div>
+          <div 
+            v-for="sub in selectedCategory.subCategories" 
+            :key="sub"
+            class="grid-item"
+            :class="{ active: filters.subCategory === sub }"
+            @click="selectSubCategory(sub)"
+          >
+            {{ sub }}
+          </div>
+        </div>
+      </div>
+      <div class="right-content empty-right" v-else-if="activeTabType === 'category'">
+        <div class="empty-tip">请选择左侧职位类型</div>
+      </div>
+    </div>
+    
     <div class="sort-bar">
       <div 
         class="sort-item"
         :class="{ active: sortBy === 'default' }"
         @click="setSort('default')"
       >
-        综合排序
+        综合
       </div>
       <div 
         class="sort-item"
@@ -36,7 +119,6 @@
         @click="setSort('salary')"
       >
         薪资最高
-        <i class="el-icon-arrow-down" v-if="sortBy === 'salary'"></i>
       </div>
       <div 
         class="sort-item"
@@ -51,44 +133,41 @@
       <div 
         v-for="job in jobList" 
         :key="job.id"
-        class="job-card"
+        class="job-item"
         @click="goToDetail(job.id)"
       >
-        <div class="job-header">
-          <span class="job-title">{{ job.title }}</span>
-          <span class="salary">{{ formatSalary(job.salaryMin, job.salaryMax) }}K/月</span>
-        </div>
-        
-        <div class="job-tags">
-          <span class="tag-item">{{ job.city }}</span>
-          <span class="tag-item">{{ job.workYears }}</span>
-          <span class="tag-item">{{ job.education }}</span>
-        </div>
-        
-        <div class="job-company">
-          <el-avatar :size="36" :src="job.companyLogo">
-            <i class="el-icon-office-building"></i>
-          </el-avatar>
-          <div class="company-info">
+        <div class="job-main">
+          <div class="job-info">
+            <span class="job-title">{{ job.title }}</span>
+            <span class="job-salary">{{ formatSalary(job.salaryMin, job.salaryMax) }}K</span>
+          </div>
+          <div class="job-meta">
             <span class="company-name">{{ job.companyName }}</span>
-            <span class="company-meta">{{ job.industry }} · {{ job.companySize }}</span>
+            <span class="job-tags-item">{{ job.city }}</span>
+            <span class="job-tags-item">{{ job.workYears }}</span>
+            <span class="job-tags-item">{{ job.education }}</span>
+          </div>
+          <div class="job-tags">
+            <span class="tag" v-if="job.subCategory">{{ job.subCategory }}</span>
+            <span class="tag">{{ job.jobType }}</span>
           </div>
         </div>
-        
         <div class="job-footer">
-          <span class="update-time">{{ formatTime(job.publishTime) }}</span>
-          <span class="view-count">{{ job.viewCount }}次浏览</span>
+          <div class="company-info">
+            <span class="company-industry">{{ job.industry }}</span>
+            <span class="company-size">{{ job.companySize }}</span>
+          </div>
+          <div class="job-time">{{ formatTime(job.publishTime) }}</div>
         </div>
       </div>
       
       <div class="load-more" v-if="hasMore" @click="loadMore">
-        <el-button type="text" :loading="loading">
-          {{ loading ? '加载中...' : '点击加载更多' }}
-        </el-button>
+        <span v-if="loading">加载中...</span>
+        <span v-else>加载更多</span>
       </div>
       
       <div class="no-more" v-else-if="jobList.length > 0">
-        已加载全部岗位
+        没有更多了
       </div>
       
       <div class="empty" v-if="!loading && jobList.length === 0">
@@ -98,111 +177,119 @@
     </div>
     
     <div class="search-popup" v-if="showSearch">
-      <div class="search-header-popup">
-        <div class="search-box">
-          <el-input
-            ref="searchInput"
-            v-model="searchInput"
-            placeholder="搜索岗位名称、公司名称"
-            prefix-icon="el-icon-search"
-            clearable
-            @clear="doSearch"
-            @keyup.enter.native="doSearch"
-          ></el-input>
+      <div class="search-header">
+        <div class="search-input-box">
+          <input 
+            v-model="searchInput" 
+            placeholder="搜索职位、公司" 
+            @keyup.enter="doSearch"
+          />
         </div>
         <span class="cancel-btn" @click="closeSearch">取消</span>
       </div>
-      
-      <div class="search-suggestions" v-if="hotKeywords.length > 0">
-        <div class="suggestion-title">热门搜索</div>
-        <div class="keyword-list">
-          <span 
-            v-for="keyword in hotKeywords" 
-            :key="keyword"
-            class="keyword"
-            @click="selectKeyword(keyword)"
-          >
-            {{ keyword }}
-          </span>
+      <div class="search-body">
+        <div class="hot-section">
+          <div class="section-title">热门搜索</div>
+          <div class="hot-tags">
+            <span 
+              v-for="keyword in hotKeywords" 
+              :key="keyword"
+              class="hot-tag"
+              @click="selectKeyword(keyword)"
+            >
+              {{ keyword }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
     
     <div class="filter-popup" v-if="showFilter">
       <div class="filter-header">
-        <span class="title">筛选条件</span>
-        <span class="reset-btn" @click="resetFilter">重置</span>
+        <span class="title">筛选</span>
+        <span class="reset" @click="resetFilter">重置</span>
       </div>
-      
-      <div class="filter-content">
-        <div class="filter-group">
-          <div class="group-title">工作地点</div>
-          <div class="group-options">
+      <div class="filter-body">
+        <div class="filter-section">
+          <div class="section-title">工作城市</div>
+          <div class="option-list">
+            <span 
+              class="option" 
+              :class="{ active: filters.city === '' }"
+              @click="filters.city = ''"
+            >
+              不限
+            </span>
             <span 
               v-for="city in cities" 
               :key="city"
-              class="option"
+              class="option" 
               :class="{ active: filters.city === city }"
-              @click="filters.city = filters.city === city ? '' : city"
+              @click="filters.city = city"
             >
               {{ city }}
             </span>
           </div>
         </div>
         
-        <div class="filter-group">
-          <div class="group-title">薪资范围</div>
-          <div class="group-options">
-            <span 
-              v-for="salary in salaryRanges" 
-              :key="salary.value"
-              class="option"
-              :class="{ active: filters.salaryRange === salary.value }"
-              @click="filters.salaryRange = filters.salaryRange === salary.value ? '' : salary.value"
-            >
-              {{ salary.label }}
-            </span>
-          </div>
-        </div>
-        
-        <div class="filter-group">
-          <div class="group-title">工作经验</div>
-          <div class="group-options">
+        <div class="filter-section">
+          <div class="section-title">工作经验</div>
+          <div class="option-list">
             <span 
               v-for="exp in workExps" 
               :key="exp.value"
-              class="option"
+              class="option" 
               :class="{ active: filters.workYears === exp.value }"
-              @click="filters.workYears = filters.workYears === exp.value ? '' : exp.value"
+              @click="filters.workYears = exp.value"
             >
               {{ exp.label }}
             </span>
           </div>
         </div>
         
-        <div class="filter-group">
-          <div class="group-title">学历要求</div>
-          <div class="group-options">
+        <div class="filter-section">
+          <div class="section-title">学历要求</div>
+          <div class="option-list">
             <span 
               v-for="edu in educations" 
               :key="edu.value"
-              class="option"
+              class="option" 
               :class="{ active: filters.education === edu.value }"
-              @click="filters.education = filters.education === edu.value ? '' : edu.value"
+              @click="filters.education = edu.value"
             >
               {{ edu.label }}
             </span>
           </div>
         </div>
+        
+        <div class="filter-section">
+          <div class="section-title">薪资范围</div>
+          <div class="option-list">
+            <span 
+              class="option" 
+              :class="{ active: filters.salaryRange === '' }"
+              @click="filters.salaryRange = ''"
+            >
+              不限
+            </span>
+            <span 
+              v-for="salary in salaryRanges" 
+              :key="salary.value"
+              class="option" 
+              :class="{ active: filters.salaryRange === salary.value }"
+              @click="filters.salaryRange = salary.value"
+            >
+              {{ salary.label }}
+            </span>
+          </div>
+        </div>
       </div>
-      
       <div class="filter-footer">
-        <div class="btn cancel" @click="showFilter = false">取消</div>
         <div class="btn confirm" @click="applyFilter">确定</div>
       </div>
     </div>
     
-    <div class="popup-mask" v-if="showSearch || showFilter" @click="closeAllPopups"></div>
+    <div class="mask" v-if="showPanel || showFilter || showSearch" @click="closeAll"></div>
   </div>
 </template>
 
@@ -220,20 +307,29 @@ export default {
       hasMore: true,
       sortBy: 'default',
       
+      activeTabType: 'industry',
+      showPanel: false,
+      
       searchKeyword: '',
       searchInput: '',
       showSearch: false,
       showFilter: false,
       
+      industries: [],
+      jobCategories: [],
+      
       filters: {
         city: '',
         salaryRange: '',
         workYears: '',
-        education: ''
+        education: '',
+        industryId: '',
+        categoryId: '',
+        subCategory: ''
       },
       
-      hotKeywords: ['Java', '前端开发', '产品经理', '运营', '销售', '会计'],
-      cities: ['北京', '上海', '广州', '深圳', '杭州', '成都', '武汉', '西安'],
+      hotKeywords: ['Java', '前端开发', '产品经理', '运营', '销售', '会计', 'UI设计', '数据分析师', '项目经理', 'HR'],
+      cities: ['北京', '上海', '广州', '深圳', '杭州', '成都', '武汉', '西安', '南京', '重庆', '苏州', '天津'],
       salaryRanges: [
         { label: '3K以下', value: '1' },
         { label: '3-5K', value: '2' },
@@ -260,8 +356,29 @@ export default {
     };
   },
   computed: {
+    selectedCategory() {
+      if (this.filters.categoryId && this.jobCategories.length > 0) {
+        return this.jobCategories.find(c => c.id == this.filters.categoryId);
+      }
+      return null;
+    },
+    selectedIndustry() {
+      if (this.filters.industryId && this.industries.length > 0) {
+        return this.industries.find(i => i.id == this.filters.industryId);
+      }
+      return null;
+    },
     activeFilters() {
       const filters = [];
+      if (this.filters.industryId && this.selectedIndustry) {
+        filters.push({ key: 'industryId', value: this.selectedIndustry.name });
+      }
+      if (this.filters.categoryId && this.selectedCategory) {
+        filters.push({ key: 'categoryId', value: this.selectedCategory.name });
+      }
+      if (this.filters.subCategory) {
+        filters.push({ key: 'subCategory', value: this.filters.subCategory });
+      }
       if (this.filters.city) {
         filters.push({ key: 'city', value: this.filters.city });
       }
@@ -271,19 +388,66 @@ export default {
           filters.push({ key: 'salaryRange', value: salary.label });
         }
       }
-      if (this.filters.workYears) {
+      if (this.filters.workYears && this.filters.workYears !== '不限') {
         filters.push({ key: 'workYears', value: this.filters.workYears });
       }
-      if (this.filters.education) {
+      if (this.filters.education && this.filters.education !== '不限') {
         filters.push({ key: 'education', value: this.filters.education });
       }
       return filters;
     }
   },
-  mounted() {
+  async mounted() {
+    await this.loadCategories();
     this.getJobList();
   },
   methods: {
+    async loadCategories() {
+      try {
+        const [industryRes, categoryRes] = await Promise.all([
+          get('/jobs/industries'),
+          get('/jobs/categories')
+        ]);
+        if (industryRes.code === 200) {
+          this.industries = industryRes.data;
+        }
+        if (categoryRes.code === 200) {
+          this.jobCategories = categoryRes.data;
+        }
+      } catch (error) {
+        console.error('加载分类数据失败:', error);
+      }
+    },
+    toggleCategoryTab(type) {
+      if (this.activeTabType === type) {
+        this.showPanel = !this.showPanel;
+      } else {
+        this.activeTabType = type;
+        this.showPanel = true;
+      }
+    },
+    selectIndustry(id) {
+      this.filters.industryId = id;
+      this.filters.categoryId = '';
+      this.filters.subCategory = '';
+      this.showPanel = false;
+      this.getJobList(true);
+    },
+    selectCategory(id) {
+      this.filters.categoryId = id;
+      this.filters.industryId = '';
+      if (!id) {
+        this.filters.subCategory = '';
+        this.showPanel = false;
+        this.getJobList(true);
+        return;
+      }
+    },
+    selectSubCategory(sub) {
+      this.filters.subCategory = sub;
+      this.showPanel = false;
+      this.getJobList(true);
+    },
     async getJobList(refresh = true) {
       if (refresh) {
         this.page = 1;
@@ -333,9 +497,10 @@ export default {
     closeSearch() {
       this.showSearch = false;
     },
-    closeAllPopups() {
+    closeAll() {
       this.showSearch = false;
       this.showFilter = false;
+      this.showPanel = false;
     },
     selectKeyword(keyword) {
       this.searchInput = keyword;
@@ -344,6 +509,7 @@ export default {
     doSearch() {
       this.searchKeyword = this.searchInput;
       this.closeSearch();
+      this.showPanel = false;
       this.getJobList(true);
     },
     clearFilter(key) {
@@ -355,7 +521,10 @@ export default {
         city: '',
         salaryRange: '',
         workYears: '',
-        education: ''
+        education: '',
+        industryId: '',
+        categoryId: '',
+        subCategory: ''
       };
       this.searchKeyword = '';
       this.getJobList(true);
@@ -365,7 +534,10 @@ export default {
         city: '',
         salaryRange: '',
         workYears: '',
-        education: ''
+        education: '',
+        industryId: this.filters.industryId,
+        categoryId: this.filters.categoryId,
+        subCategory: this.filters.subCategory
       };
     },
     applyFilter() {
@@ -401,64 +573,48 @@ export default {
 </script>
 
 <style scoped>
+* {
+  box-sizing: border-box;
+}
+
 .jobs-page {
   background: #f5f5f5;
   min-height: calc(100vh - 50px);
 }
 
-/* 搜索头部 */
-.search-header {
+/* 顶部分类标签 */
+.top-tabs {
   position: sticky;
   top: 0;
   z-index: 100;
   background: #fff;
+}
+
+.tab-list {
+  display: flex;
+  align-items: center;
   padding: 12px 15px;
-  display: flex;
-  align-items: center;
   gap: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.search-bar {
-  flex: 1;
-  height: 36px;
-  background: #f5f7fa;
-  border-radius: 18px;
+.tab-item {
   display: flex;
   align-items: center;
-  padding: 0 15px;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.search-bar i {
-  font-size: 16px;
-  color: #909399;
-}
-
-.search-bar span {
+  gap: 3px;
   font-size: 14px;
-  color: #909399;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.filter-btn {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f5f7fa;
-  border-radius: 50%;
+  color: #666;
   cursor: pointer;
+  padding: 4px 0;
 }
 
-.filter-btn i {
-  font-size: 18px;
-  color: #606266;
+.tab-item.active {
+  color: #12B7F5;
+  font-weight: 500;
+}
+
+.tab-item i {
+  font-size: 12px;
 }
 
 /* 筛选标签 */
@@ -476,9 +632,9 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
-  background: #ecf5ff;
-  color: #409eff;
+  padding: 3px 10px;
+  background: #12B7F51A;
+  color: #12B7F5;
   font-size: 12px;
   border-radius: 12px;
 }
@@ -490,9 +646,81 @@ export default {
 
 .filter-tags .clear-all {
   font-size: 12px;
-  color: #909399;
+  color: #999;
   margin-left: 8px;
   cursor: pointer;
+}
+
+/* 分类面板 */
+.category-panel {
+  position: absolute;
+  top: 45px;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: #fff;
+  display: flex;
+  max-height: 300px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.left-list {
+  width: 110px;
+  background: #f5f5f5;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.list-item {
+  padding: 12px 15px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+
+.list-item.active {
+  background: #fff;
+  color: #12B7F5;
+  border-left-color: #12B7F5;
+  font-weight: 500;
+}
+
+.right-content {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+.right-content.empty-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-tip {
+  color: #999;
+  font-size: 13px;
+}
+
+.grid-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.grid-item {
+  padding: 6px 16px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+}
+
+.grid-item.active {
+  background: #12B7F5;
+  color: #fff;
 }
 
 /* 排序栏 */
@@ -505,121 +733,116 @@ export default {
 }
 
 .sort-item {
-  font-size: 14px;
-  color: #606266;
+  font-size: 13px;
+  color: #666;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 2px;
 }
 
 .sort-item.active {
-  color: #409eff;
+  color: #12B7F5;
   font-weight: 500;
 }
 
 /* 岗位列表 */
 .job-list {
-  padding: 10px;
+  padding: 8px 12px;
 }
 
-.job-card {
+.job-item {
   background: #fff;
-  border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
-.job-card:active {
-  transform: scale(0.99);
-  background: #fafafa;
+.job-main {
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #f0f0f0;
 }
 
-.job-header {
+.job-info {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .job-title {
   font-size: 16px;
   font-weight: 500;
-  color: #303133;
-  flex: 1;
-  margin-right: 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: #333;
 }
 
-.salary {
+.job-salary {
   font-size: 16px;
   font-weight: bold;
-  color: #fa5555;
+  color: #FA6041;
+}
+
+.job-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.company-name {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.job-tags-item {
+  font-size: 12px;
+  color: #666;
+  padding: 2px 0;
 }
 
 .job-tags {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
 }
 
-.tag-item {
+.job-tags .tag {
+  font-size: 11px;
+  color: #12B7F5;
+  background: #12B7F51A;
   padding: 2px 8px;
-  background: #f5f7fa;
-  color: #909399;
-  font-size: 12px;
-  border-radius: 4px;
-}
-
-.job-company {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-top: 1px solid #f5f5f5;
-}
-
-.company-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-  overflow: hidden;
-}
-
-.company-name {
-  font-size: 14px;
-  color: #303133;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.company-meta {
-  font-size: 12px;
-  color: #909399;
+  border-radius: 2px;
 }
 
 .job-footer {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding-top: 10px;
-  border-top: 1px solid #f5f5f5;
+}
+
+.company-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.company-industry,
+.company-size {
   font-size: 12px;
-  color: #c0c4cc;
+  color: #999;
+}
+
+.job-time {
+  font-size: 11px;
+  color: #ccc;
 }
 
 /* 加载更多 */
 .load-more, .no-more, .empty {
   text-align: center;
   padding: 20px;
-  font-size: 14px;
-  color: #909399;
+  font-size: 13px;
+  color: #999;
 }
 
 .empty {
@@ -627,12 +850,12 @@ export default {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding-top: 80px;
+  padding-top: 60px;
 }
 
 .empty i {
-  font-size: 60px;
-  color: #e4e7ed;
+  font-size: 50px;
+  color: #ddd;
 }
 
 .empty p {
@@ -650,7 +873,7 @@ export default {
   z-index: 1001;
 }
 
-.search-header-popup {
+.search-header {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -658,51 +881,58 @@ export default {
   border-bottom: 1px solid #f0f0f0;
 }
 
-.search-box {
+.search-input-box {
   flex: 1;
+  height: 36px;
+  background: #f5f5f5;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
 }
 
-.search-box ::v-deep .el-input__inner {
-  height: 36px;
-  border-radius: 18px;
-  background: #f5f7fa;
+.search-input-box input {
+  width: 100%;
   border: none;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-input-box input::placeholder {
+  color: #999;
 }
 
 .cancel-btn {
   font-size: 14px;
-  color: #606266;
+  color: #666;
   cursor: pointer;
 }
 
-.search-suggestions {
+.search-body {
   padding: 15px;
 }
 
-.suggestion-title {
+.hot-section .section-title {
   font-size: 14px;
-  color: #606266;
+  color: #333;
   margin-bottom: 12px;
+  font-weight: 500;
 }
 
-.keyword-list {
+.hot-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.keyword {
+.hot-tag {
   padding: 6px 16px;
-  background: #f5f7fa;
-  color: #606266;
+  background: #f5f5f5;
+  color: #333;
   font-size: 13px;
-  border-radius: 16px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s;
-}
-
-.keyword:active {
-  background: #e4e7ed;
 }
 
 /* 筛选弹窗 */
@@ -711,8 +941,8 @@ export default {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 80%;
-  max-width: 360px;
+  width: 85%;
+  max-width: 320px;
   background: #fff;
   z-index: 1001;
   display: flex;
@@ -730,60 +960,57 @@ export default {
 .filter-header .title {
   font-size: 16px;
   font-weight: 500;
-  color: #303133;
+  color: #333;
 }
 
-.filter-header .reset-btn {
+.filter-header .reset {
   font-size: 14px;
-  color: #409eff;
+  color: #12B7F5;
   cursor: pointer;
 }
 
-.filter-content {
+.filter-body {
   flex: 1;
   overflow-y: auto;
   padding: 15px 20px;
 }
 
-.filter-group {
-  margin-bottom: 20px;
+.filter-section {
+  margin-bottom: 25px;
 }
 
-.group-title {
+.filter-section .section-title {
   font-size: 14px;
-  color: #606266;
+  color: #333;
   margin-bottom: 12px;
+  font-weight: 500;
 }
 
-.group-options {
+.option-list {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.group-options .option {
+.option-list .option {
   padding: 6px 16px;
-  background: #f5f7fa;
-  color: #606266;
+  background: #f5f5f5;
+  color: #333;
   font-size: 13px;
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
-.group-options .option.active {
-  background: #ecf5ff;
-  color: #409eff;
-  border: 1px solid #409eff;
+.option-list .option.active {
+  background: #12B7F5;
+  color: #fff;
 }
 
 .filter-footer {
-  display: flex;
   border-top: 1px solid #f0f0f0;
 }
 
 .filter-footer .btn {
-  flex: 1;
   height: 48px;
   display: flex;
   align-items: center;
@@ -792,24 +1019,19 @@ export default {
   cursor: pointer;
 }
 
-.filter-footer .btn.cancel {
-  background: #fff;
-  color: #606266;
-}
-
 .filter-footer .btn.confirm {
-  background: #409eff;
+  background: #12B7F5;
   color: #fff;
 }
 
 /* 遮罩层 */
-.popup-mask {
+.mask {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 99;
 }
 </style>

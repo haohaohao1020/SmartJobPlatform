@@ -48,7 +48,7 @@
             </template>
           </el-table-column>
           
-          <el-table-column prop="title" label="岗位信息" min-width="220">
+          <el-table-column prop="title" label="岗位信息" min-width="260">
             <template slot-scope="scope">
               <div class="job-info">
                 <div class="job-main">
@@ -61,6 +61,11 @@
                   <span>{{ scope.row.workYears }}</span>
                   <span class="divider">|</span>
                   <span>{{ scope.row.education }}</span>
+                </div>
+                <div class="job-cats">
+                  <el-tag size="mini" type="primary" effect="plain">{{ scope.row.industry }}</el-tag>
+                  <el-tag size="mini" type="success" effect="plain">{{ scope.row.categoryName }}</el-tag>
+                  <el-tag v-if="scope.row.subCategory" size="mini" effect="plain">{{ scope.row.subCategory }}</el-tag>
                 </div>
               </div>
             </template>
@@ -474,6 +479,13 @@ export default {
 .job-meta .divider {
   margin: 0 8px;
   color: #e4e7ed;
+}
+
+.job-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
 }
 
 /* 企业信息 */

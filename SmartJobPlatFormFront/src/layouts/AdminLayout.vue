@@ -134,6 +134,18 @@ export default {
       return breadcrumbMap[this.$route.path] || [{ name: '首页' }];
     }
   },
+  watch: {
+    isAuthenticated(newVal) {
+      if (newVal) {
+        const loginPath = '/admin/login';
+        if (this.$route.path === loginPath) {
+          this.$router.push('/admin/dashboard');
+        }
+      } else {
+        this.checkLogin();
+      }
+    }
+  },
   mounted() {
     // 恢复用户信息
     this.userStore.restoreUserInfo();
