@@ -21,6 +21,16 @@ export default defineConfig({
   },
   server: {
     port: 8081,
-    open: false
+    open: false,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:9000',
+        changeOrigin: true
+      },
+      '/uploads': {
+        target: 'http://localhost:9000',
+        changeOrigin: true
+      }
+    }
   }
 });

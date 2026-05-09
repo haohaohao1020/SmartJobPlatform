@@ -1,22 +1,22 @@
 package com.smartjob.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartjob.common.PageResult;
 import com.smartjob.common.Result;
+import com.smartjob.model.Company;
 import com.smartjob.model.Job;
-import com.smartjob.model.JobCategory;
-import com.smartjob.model.Industry;
+import com.smartjob.service.CompanyService;
 import com.smartjob.service.JobService;
 import com.smartjob.service.UserService;
 import com.smartjob.utils.CurrentUserHolder;
 import com.smartjob.dto.UserInfoVO;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -27,6 +27,12 @@ public class JobController {
     
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private CompanyService companyService;
+    
+    @Autowired
+    private ObjectMapper objectMapper;
     
     @GetMapping("/jobs/industries")
     public Result<List<Map<String, Object>>> getIndustries() {
@@ -63,7 +69,7 @@ public class JobController {
     }
     
     @GetMapping("/jobs")
-    public Result<PageResult<Job>> getJobs(
+    public Result<PageResult<Map<String, Object>>> getJobs(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String keyword,
@@ -83,8 +89,13 @@ public class JobController {
                 salaryRange, salary, industryId, categoryId, subCategory,
                 sortBy, sortOrder);
         
-        PageResult<Job> result = PageResult.of(
-                jobPage.getRecords(),
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Job job : jobPage.getRecords()) {
+            list.add(convertJobToMap(job));
+        }
+        
+        PageResult<Map<String, Object>> result = PageResult.of(
+                list,
                 jobPage.getTotal(),
                 page,
                 pageSize);
@@ -93,28 +104,36 @@ public class JobController {
     }
     
     @GetMapping("/jobs/{id}")
-    public Result<Job> getJobDetail(@PathVariable Long id) {
+    public Result<Map<String, Object>> getJobDetail(@PathVariable Long id) {
         Job job = jobService.getJobDetail(id);
         if (job == null) {
             return Result.error("岗位不存在");
         }
-        return Result.success(job);
+        return Result.success(convertJobToMap(job));
     }
     
     @GetMapping("/jobs/hot")
-    public Result<List<Job>> getHotJobs() {
+    public Result<List<Map<String, Object>>> getHotJobs() {
         List<Job> jobs = jobService.getHotJobs();
-        return Result.success(jobs);
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Job job : jobs) {
+            list.add(convertJobToMap(job));
+        }
+        return Result.success(list);
     }
     
     @GetMapping("/jobs/latest")
-    public Result<List<Job>> getLatestJobs() {
+    public Result<List<Map<String, Object>>> getLatestJobs() {
         List<Job> jobs = jobService.getLatestJobs();
-        return Result.success(jobs);
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Job job : jobs) {
+            list.add(convertJobToMap(job));
+        }
+        return Result.success(list);
     }
     
     @GetMapping("/hr/jobs")
-    public Result<PageResult<Job>> getHrJobs(
+    public Result<PageResult<Map<String, Object>>> getHrJobs(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String keyword,
@@ -123,8 +142,13 @@ public class JobController {
         Long hrId = CurrentUserHolder.getUserId();
         Page<Job> jobPage = jobService.getJobPageForHr(page, pageSize, keyword, status, hrId);
         
-        PageResult<Job> result = PageResult.of(
-                jobPage.getRecords(),
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Job job : jobPage.getRecords()) {
+            list.add(convertJobToMap(job));
+        }
+        
+        PageResult<Map<String, Object>> result = PageResult.of(
+                list,
                 jobPage.getTotal(),
                 page,
                 pageSize);
@@ -133,18 +157,102 @@ public class JobController {
     }
     
     @PostMapping("/hr/jobs")
-    public Result<Job> publishJob(@RequestBody Job job) {
+    public Result<Map<String, Object>> publishJob(@RequestBody Map<String, Object> jobForm) {
         Long hrId = CurrentUserHolder.getUserId();
         UserInfoVO user = userService.getCurrentUserInfo();
+        
+        Job job = new Job();
+        job.setTitle((String) jobForm.get("title"));
+        job.setCity((String) jobForm.get("city"));
+        job.setWorkYears((String) jobForm.get("workYears"));
+        job.setEducation((String) jobForm.get("education"));
+        job.setJobType((String) jobForm.get("jobType"));
+        job.setDescription((String) jobForm.get("description"));
+        job.setRequirement((String) jobForm.get("requirements"));
+        job.setSubCategory((String) jobForm.get("subCategory"));
+        
+        Object salaryMin = jobForm.get("salaryMin");
+        if (salaryMin != null) {
+            job.setSalaryMin(((Number) salaryMin).intValue());
+        }
+        Object salaryMax = jobForm.get("salaryMax");
+        if (salaryMax != null) {
+            job.setSalaryMax(((Number) salaryMax).intValue());
+        }
+        
+        Object welfare = jobForm.get("welfare");
+        if (welfare != null) {
+            try {
+                job.setTags(objectMapper.writeValueAsString(welfare));
+            } catch (Exception e) {
+                job.setTags(welfare.toString());
+            }
+        }
+        
+        Company company = companyService.getMyCompany(hrId);
+        if (company != null) {
+            job.setCompanyId(company.getId());
+            job.setCompanyName(company.getName());
+            job.setCompanyLogo(company.getLogo());
+            job.setIndustry(company.getIndustry());
+        }
+        
         Job newJob = jobService.publishJob(job, hrId, user.getUsername(), "HR");
-        return Result.success("发布成功，等待审核", newJob);
+        return Result.success("发布成功，等待审核", convertJobToMap(newJob));
     }
     
     @PutMapping("/hr/jobs/{id}")
-    public Result<Job> updateJob(@PathVariable Long id, @RequestBody Job job) {
-        job.setId(id);
+    public Result<Map<String, Object>> updateJob(@PathVariable Long id, @RequestBody Map<String, Object> jobForm) {
+        Job job = jobService.getById(id);
+        if (job == null) {
+            return Result.error("岗位不存在");
+        }
+        
+        if (jobForm.containsKey("title")) {
+            job.setTitle((String) jobForm.get("title"));
+        }
+        if (jobForm.containsKey("city")) {
+            job.setCity((String) jobForm.get("city"));
+        }
+        if (jobForm.containsKey("workYears")) {
+            job.setWorkYears((String) jobForm.get("workYears"));
+        }
+        if (jobForm.containsKey("education")) {
+            job.setEducation((String) jobForm.get("education"));
+        }
+        if (jobForm.containsKey("jobType")) {
+            job.setJobType((String) jobForm.get("jobType"));
+        }
+        if (jobForm.containsKey("description")) {
+            job.setDescription((String) jobForm.get("description"));
+        }
+        if (jobForm.containsKey("requirements")) {
+            job.setRequirement((String) jobForm.get("requirements"));
+        }
+        if (jobForm.containsKey("subCategory")) {
+            job.setSubCategory((String) jobForm.get("subCategory"));
+        }
+        
+        Object salaryMin = jobForm.get("salaryMin");
+        if (salaryMin != null) {
+            job.setSalaryMin(((Number) salaryMin).intValue());
+        }
+        Object salaryMax = jobForm.get("salaryMax");
+        if (salaryMax != null) {
+            job.setSalaryMax(((Number) salaryMax).intValue());
+        }
+        
+        Object welfare = jobForm.get("welfare");
+        if (welfare != null) {
+            try {
+                job.setTags(objectMapper.writeValueAsString(welfare));
+            } catch (Exception e) {
+                job.setTags(welfare.toString());
+            }
+        }
+        
         Job updatedJob = jobService.updateJob(job);
-        return Result.success("更新成功", updatedJob);
+        return Result.success("更新成功", convertJobToMap(updatedJob));
     }
     
     @PutMapping("/hr/jobs/{id}/status")
@@ -161,7 +269,7 @@ public class JobController {
     }
     
     @GetMapping("/admin/jobs")
-    public Result<PageResult<Job>> getAdminJobs(
+    public Result<PageResult<Map<String, Object>>> getAdminJobs(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String keyword,
@@ -169,8 +277,13 @@ public class JobController {
         
         Page<Job> jobPage = jobService.getJobPageForAdmin(page, pageSize, keyword, auditStatus);
         
-        PageResult<Job> result = PageResult.of(
-                jobPage.getRecords(),
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Job job : jobPage.getRecords()) {
+            list.add(convertJobToMap(job));
+        }
+        
+        PageResult<Map<String, Object>> result = PageResult.of(
+                list,
                 jobPage.getTotal(),
                 page,
                 pageSize);
@@ -194,6 +307,42 @@ public class JobController {
         
         jobService.auditJob(id, auditStatus, rejectReason);
         return Result.success(message, null);
+    }
+    
+    private Map<String, Object> convertJobToMap(Job job) {
+        Map<String, Object> map = new HashMap<>();
+        BeanUtils.copyProperties(job, map);
+        
+        map.put("requirements", job.getRequirement());
+        map.put("hrPosition", job.getHrTitle());
+        
+        if (job.getTags() != null && !job.getTags().isEmpty()) {
+            try {
+                if (job.getTags().startsWith("[") || job.getTags().startsWith("{")) {
+                    List<String> welfare = objectMapper.readValue(job.getTags(), new TypeReference<List<String>>() {});
+                    map.put("welfare", welfare);
+                } else {
+                    map.put("welfare", Arrays.asList(job.getTags()));
+                }
+            } catch (Exception e) {
+                map.put("welfare", Arrays.asList(job.getTags()));
+            }
+        } else {
+            map.put("welfare", new ArrayList<>());
+        }
+        
+        Company company = null;
+        if (job.getCompanyId() != null) {
+            company = companyService.getById(job.getCompanyId());
+        }
+        
+        if (company != null) {
+            map.put("companySize", company.getScale());
+        } else {
+            map.put("companySize", "1000人以上");
+        }
+        
+        return map;
     }
     
     private Map<String, Object> createIndustryMap(Long id, String name, String icon) {

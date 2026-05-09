@@ -413,22 +413,22 @@ CREATE TABLE sys_config (
 
 -- 管理员账号: admin / 123456
 INSERT INTO sys_user (username, password, nickname, email, role, status) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', '系统管理员', 'admin@smartjob.com', 'ADMIN', 1);
+('admin', '$2a$10$gj5CoGKmK.IOe8y/HTDwp.Lsvlgm3dKPgDp4nkHFSX7sQ7ul3eX4q', '系统管理员', 'admin@smartjob.com', 'ADMIN', 1);
 
 -- HR账号: hr1 / 123456
-INSERT INTO sys_user (username, password, nickname, email, role, status) VALUES
-('hr1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', 'HR小明', 'hr1@test.com', 'HR', 1),
-('hr2', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', 'HR小红', 'hr2@test.com', 'HR', 1),
-('hr3', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', 'HR小刚', 'hr3@test.com', 'HR', 1),
-('hr4', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', 'HR小李', 'hr4@test.com', 'HR', 1);
+INSERT INTO sys_user (username, password, nickname, email, phone, role, status) VALUES
+('hr1', '$2a$10$gj5CoGKmK.IOe8y/HTDwp.Lsvlgm3dKPgDp4nkHFSX7sQ7ul3eX4q', 'HR小明', 'hr1@test.com', '13900139001', 'HR', 1),
+('hr2', '$2a$10$gj5CoGKmK.IOe8y/HTDwp.Lsvlgm3dKPgDp4nkHFSX7sQ7ul3eX4q', 'HR小红', 'hr2@test.com', '13900139002', 'HR', 1),
+('hr3', '$2a$10$gj5CoGKmK.IOe8y/HTDwp.Lsvlgm3dKPgDp4nkHFSX7sQ7ul3eX4q', 'HR小刚', 'hr3@test.com', '13900139003', 'HR', 1),
+('hr4', '$2a$10$gj5CoGKmK.IOe8y/HTDwp.Lsvlgm3dKPgDp4nkHFSX7sQ7ul3eX4q', 'HR小李', 'hr4@test.com', '13900139004', 'HR', 1);
 
 -- 求职者账号: jobseeker1 / 123456
 INSERT INTO sys_user (username, password, nickname, email, phone, gender, city, role, status) VALUES
-('jobseeker1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', '张三', 'zhangsan@test.com', '13800000001', 1, '北京', 'JOBSEEKER', 1),
-('jobseeker2', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', '李四', 'lisi@test.com', '13800000002', 2, '上海', 'JOBSEEKER', 1),
-('jobseeker3', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', '王五', 'wangwu@test.com', '13800000003', 1, '深圳', 'JOBSEEKER', 1),
-('jobseeker4', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', '赵六', 'zhaoliu@test.com', '13800000004', 1, '杭州', 'JOBSEEKER', 1),
-('jobseeker5', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', '钱七', 'qianqi@test.com', '13800000005', 2, '广州', 'JOBSEEKER', 1);
+('jobseeker1', '$2a$10$gj5CoGKmK.IOe8y/HTDwp.Lsvlgm3dKPgDp4nkHFSX7sQ7ul3eX4q', '张三', 'zhangsan@test.com', '13800000001', 1, '北京', 'JOBSEEKER', 1),
+('jobseeker2', '$2a$10$gj5CoGKmK.IOe8y/HTDwp.Lsvlgm3dKPgDp4nkHFSX7sQ7ul3eX4q', '李四', 'lisi@test.com', '13800000002', 2, '上海', 'JOBSEEKER', 1),
+('jobseeker3', '$2a$10$gj5CoGKmK.IOe8y/HTDwp.Lsvlgm3dKPgDp4nkHFSX7sQ7ul3eX4q', '王五', 'wangwu@test.com', '13800000003', 1, '深圳', 'JOBSEEKER', 1),
+('jobseeker4', '$2a$10$gj5CoGKmK.IOe8y/HTDwp.Lsvlgm3dKPgDp4nkHFSX7sQ7ul3eX4q', '赵六', 'zhaoliu@test.com', '13800000004', 1, '杭州', 'JOBSEEKER', 1),
+('jobseeker5', '$2a$10$gj5CoGKmK.IOe8y/HTDwp.Lsvlgm3dKPgDp4nkHFSX7sQ7ul3eX4q', '钱七', 'qianqi@test.com', '13800000005', 2, '广州', 'JOBSEEKER', 1);
 
 -- 企业数据
 INSERT INTO sys_company (user_id, name, short_name, logo, industry, scale, type, established_date, registered_capital, legal_person, contact_name, contact_phone, contact_email, province, city, district, address, description, benefits, website, view_count, job_count, audit_status, status) VALUES

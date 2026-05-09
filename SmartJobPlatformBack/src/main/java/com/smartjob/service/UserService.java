@@ -30,15 +30,20 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     private JwtUtil jwtUtil;
     
     public LoginResultVO login(LoginDTO dto, String role) {
-        User user;
-        if (Constants.ROLE_ADMIN.equals(role)) {
-            user = this.getOne(new LambdaQueryWrapper<User>()
+        User user = null;
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<User>()
+                .eq(User::getRole, role);
+        
+        if (StringUtils.hasText(dto.getUsername())) {
+            wrapper.eq(User::getUsername, dto.getUsername());
+            user = this.getOne(wrapper);
+        }
+        
+        if (user == null && StringUtils.hasText(dto.getPhone())) {
+            LambdaQueryWrapper<User> phoneWrapper = new LambdaQueryWrapper<User>()
                     .eq(User::getRole, role)
-                    .eq(User::getUsername, dto.getUsername()));
-        } else {
-            user = this.getOne(new LambdaQueryWrapper<User>()
-                    .eq(User::getRole, role)
-                    .eq(User::getPhone, dto.getPhone()));
+                    .eq(User::getPhone, dto.getPhone());
+            user = this.getOne(phoneWrapper);
         }
         
         if (user == null) {

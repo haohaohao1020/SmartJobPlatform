@@ -5,6 +5,7 @@ com\smartjob\config\MetaFieldHandler.class
 com\smartjob\controller\ResumeController.class
 com\smartjob\service\ResumeService.class
 com\smartjob\config\WebConfig.class
+com\smartjob\controller\JobController$1.class
 com\smartjob\utils\JwtUtil.class
 com\smartjob\controller\UserController.class
 com\smartjob\mapper\CompanyMapper.class
